@@ -6,7 +6,7 @@ resize();
 window.onresize = resize;
 
 var rx = 0,
-    ry = 180,
+    ry = 90,
     rz = 180,
     clicked = {};
 can.onmousemove = function (e) {
@@ -58,8 +58,8 @@ var vertexShader = `
 
     varying vec3 col;
     void main(){
-        col = vec3(0.1,0.1,0.1);
-        //col = 0.5*pos+vec3(0.5,0.5,0.5);
+        col = vec3((pos.x+pos.x+pos.x)*0.16+0.5,(pos.y+pos.y+pos.y)*0.16+0.5,(pos.z+pos.z+pos.z)*0.16+0.5);
+        // col = 0.5*pos+vec3(0.5,0.5,0.5);
         gl_Position = proj * view * model * vec4(pos,1.0);
     }
 `;
@@ -95,7 +95,7 @@ function ang2d(z, o) {
     return Math.atan2(z.y - o.y, z.x - o.x);
 }
 
-function sierpinski(coords, limit) {
+function sierpinskitr(coords, limit) {
     if (--limit) {
         var x12 = (coords[0].x + coords[1].x) / 2;
         var y12 = (coords[0].y + coords[1].y) / 2;
@@ -110,9 +110,6 @@ function sierpinski(coords, limit) {
         var y14 = (coords[0].y + coords[3].y) / 2;
         var z14 = (coords[0].z + coords[3].z) / 2;
 
-        var x15 = (coords[0].x + coords[4].x) / 2;
-        var y15 = (coords[0].y + coords[4].y) / 2;
-        var z15 = (coords[0].z + coords[4].z) / 2;
 
 
 
@@ -120,19 +117,16 @@ function sierpinski(coords, limit) {
         var y23 = (coords[1].y + coords[2].y) / 2;
         var z23 = (coords[1].z + coords[2].z) / 2;
 
-        var x25 = (coords[1].x + coords[4].x) / 2;
-        var y25 = (coords[1].y + coords[4].y) / 2;
-        var z25 = (coords[1].z + coords[4].z) / 2;
+        var x24 = (coords[1].x + coords[3].x) / 2;
+        var y24 = (coords[1].y + coords[3].y) / 2;
+        var z24 = (coords[1].z + coords[3].z) / 2;
 
         var x34 = (coords[2].x + coords[3].x) / 2;
         var y34 = (coords[2].y + coords[3].y) / 2;
         var z34 = (coords[2].z + coords[3].z) / 2;
 
-        var x45 = (coords[3].x + coords[4].x) / 2;
-        var y45 = (coords[3].y + coords[4].y) / 2;
-        var z45 = (coords[3].z + coords[4].z) / 2;
 
-        sierpinski([
+        sierpinskitr([
             coords[0],
             {
                 x: x12,
@@ -146,16 +140,9 @@ function sierpinski(coords, limit) {
                 x: x14,
                 y: y14,
                 z: z14
-            }, {
-                x: x15,
-                y: y15,
-                z: z15
             }
         ], limit);
-        var base_mid_x = (x25 + x34) / 2;
-        var base_mid_y = (y25 + y34) / 2;
-        var base_mid_z = (z25 + z34) / 2;
-        sierpinski([{
+        sierpinskitr([{
             x: x12,
             y: y12,
             z: z12
@@ -164,15 +151,11 @@ function sierpinski(coords, limit) {
             y: y23,
             z: z23
         }, {
-            x: base_mid_x,
-            y: base_mid_y,
-            z: base_mid_z
-        }, {
-            x: x25,
-            y: y25,
-            z: z25
+            x: x24,
+            y: y24,
+            z: z24
         }], limit);
-        sierpinski([{
+        sierpinskitr([{
             x: x13,
             y: y13,
             z: z13
@@ -184,60 +167,34 @@ function sierpinski(coords, limit) {
             x: x34,
             y: y34,
             z: z34
-        }, {
-            x: base_mid_x,
-            y: base_mid_y,
-            z: base_mid_z
         }], limit);
-        sierpinski([{
+        sierpinskitr([{
             x: x14,
             y: y14,
             z: z14
         }, {
-            x: base_mid_x,
-            y: base_mid_y,
-            z: base_mid_z
+            x: x24,
+            y: y24,
+            z: z24
         }, {
             x: x34,
             y: y34,
             z: z34
-        }, coords[3], {
-            x: x45,
-            y: y45,
-            z: z45
-        }], limit);
+        }, coords[3]], limit);
 
-        sierpinski([{
-            x: x15,
-            y: y15,
-            z: z15
-        }, {
-            x: x25,
-            y: y25,
-            z: z25
-        }, {
-            x: base_mid_x,
-            y: base_mid_y,
-            z: base_mid_z
-        }, {
-            x: x45,
-            y: y45,
-            z: z45
-        }, coords[4]], limit);
     } else {
         triangles.push(
             coords[0].x, coords[0].y, coords[0].z,
             coords[1].x, coords[1].y, coords[1].z,
             coords[2].x, coords[2].y, coords[2].z,
+
             coords[0].x, coords[0].y, coords[0].z,
             coords[2].x, coords[2].y, coords[2].z,
             coords[3].x, coords[3].y, coords[3].z,
+
             coords[0].x, coords[0].y, coords[0].z,
             coords[3].x, coords[3].y, coords[3].z,
-            coords[4].x, coords[4].y, coords[4].z,
-            coords[0].x, coords[0].y, coords[0].z,
-            coords[4].x, coords[4].y, coords[4].z,
-            coords[1].x, coords[1].y, coords[1].z,
+            coords[1].x, coords[1].y, coords[1].z
         );
     }
 }
@@ -248,14 +205,14 @@ var proj = g.getUniform("proj");
 var view = g.getUniform("view");
 var v = new Float32Array(16);
 var p = new Float32Array(16);
-mat4.lookAt(v, [0, 0, -5], [0, 0, 3.0], [0, 1, 0]);
+mat4.lookAt(v, [0, 0, -8], [0, 0, 3.0], [0, 1, 0]);
 mat4.perspective(p, 0.5, can.width / can.height, 0.1, 10000);
 
 g.setUniform(view, v);
 g.setUniform(proj, p);
 
 triangles = [];
-sierpinski([{
+sierpinskitr([{
     x: 0.0,
     y: 1.0,
     z: 0.0
@@ -268,26 +225,24 @@ sierpinski([{
     y: -1.0,
     z: -1.0
 }, {
-    x: 1.0,
+    x: 0,
     y: -1.0,
     z: 1.0
-}, {
-    x: -1.0,
-    y: -1.0,
-    z: 1.0
-}], 7);
+}], 8);
+
+var m = new Float32Array(16);
 
 function draw() {
     var yrot = new Float32Array(16);
     var zrot = new Float32Array(16);
-    var m = new Float32Array(16);
     mat4.identity(yrot);
     mat4.identity(zrot);
     mat4.fromRotation(yrot, glMatrix.toRadian(ry), [1, 0, 0]);
-    mat4.fromRotation(zrot, glMatrix.toRadian(rz), [0, 0, 1]);
+    mat4.fromRotation(zrot, glMatrix.toRadian(rz), [0, 1, 0]);
     mat4.mul(m, yrot, zrot);
     var model = g.getUniform("model");
     g.setUniform(model, m);
+
     g.createBuffer(gl.ARRAY_BUFFER, triangles, gl.STATIC_DRAW);
     var pos = g.getAttrib("pos");
     g.setAttrib(pos, {
@@ -297,15 +252,6 @@ function draw() {
     });
     g.enableAttrib(pos);
 
-    var model = g.getUniform("model");
-
-
-    // mat4.identity(m);
-    // mat4.fromRotation(m, performance.now() / 1000 / 6 * (Math.PI * 2), [0, 1, 0]);
-    // mat4.fromRotation(m, 0, [0, 1, 0]);
-    // mat4.identity(v);
-
-    g.setUniform(model, m);
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, triangles.length / 3);
